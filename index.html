@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A-RIZAK Calculator</title>
+
+  <!-- PWA Files -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#000000" />
+  
+  <!-- Icons - Local fallback -->
+  <link rel="icon" href="icon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="icon.png" />
+
+  <!-- iOS Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Calculator">
+
+  <!-- Font Awesome - Local fallback -->
+  <link rel="stylesheet" href="font-awesome.css">
+  <style>
+    /* Basic Font Awesome fallback */
+    .fa { display: inline-block; font-style: normal; }
+  </style>
+  
+  <style>
+    /* Animated gradient background */
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(270deg, #74ebd5, #ACB6E5, #ff9a9e, #fad0c4);
+      background-size: 800% 800%;
+      animation: gradientMove 20s ease infinite;
+      transition: background 0.3s;
+      overflow-x: hidden;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    body.dark {
+      background: linear-gradient(270deg, #141e30, #243b55, #1f1c2c, #928DAB);
+      background-size: 800% 800%;
+      animation: gradientMove 25s ease infinite;
+    }
+
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Floating glowing circles */
+    body::before, body::after {
+      content: "";
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      animation: float 20s infinite ease-in-out;
+      z-index: 1;
+      filter: blur(40px);
+    }
+
+    body::before {
+      top: -100px;
+      left: -100px;
+    }
+
+    body::after {
+      bottom: -100px;
+      right: -100px;
+      animation-delay: 10s;
+    }
+
+    @keyframes float {
+      0%   { transform: translateY(0) scale(1); }
+      50%  { transform: translateY(-50px) scale(1.1); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    /* Calculator container */
+    .calculator {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 25px;
+      border-radius: 25px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25), 
+                  inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      width: 320px;
+      max-width: 100%;
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      z-index: 10;
+      margin-bottom: 20px;
+    }
+
+    body.dark .calculator {
+      background: rgba(34, 34, 34, 0.3);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Theme toggle */
+    #theme-toggle {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      font-size: 1.5rem;
+      cursor: pointer;
+      margin-bottom: 15px;
+      color: inherit;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      float: right;
+    }
+
+    #theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(15deg);
+    }
+
+    /* Display styling */
+    #display {
+      width: 100%;
+      height: 70px;
+      font-size: 2rem;
+      text-align: right;
+      margin-bottom: 20px;
+      border: none;
+      border-radius: 12px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+      color: #333;
+      font-weight: 600;
+      box-sizing: border-box;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      clear: both;
+    }
+
+    body.dark #display {
+      background: rgba(0, 0, 0, 0.4);
+      color: #fff;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Buttons grid */
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    /* Button styling */
+    button {
+      padding: 18px 5px;
+      font-size: 1.3rem;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.2s, transform 0.1s;
+      background: rgba(51, 51, 51, 0.8);
+      color: #fff;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    body.dark button {
+      background: rgba(30, 30, 30, 0.8);
+    }
+
+    /* Hover effect */
+    button:hover {
+      background: rgba(68, 68, 68, 0.9);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    body.dark button:hover {
+      background: rgba(50, 50, 50, 0.9);
+    }
+
+    /* Active effect */
+    button:active,
+    button.active {
+      background: rgba(102, 102, 102, 1) !important;
+      transform: scale(0.95) !important;
+      box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    body.dark button:active,
+    body.dark button.active {
+      background: rgba(80, 80, 80, 1) !important;
+    }
+
+    /* Special buttons */
+    .clear {
+      background: rgba(211, 47, 47, 0.8);
+    }
+
+    .delete {
+      background: rgba(245, 124, 0, 0.8);
+    }
+
+    .operator {
+      background: rgba(255, 149, 0, 0.8);
+    }
+
+    .equal {
+      background: rgba(6, 214, 160, 0.85);
+      grid-column: span 2;
+    }
+
+    /* Calculator title */
+    .calculator-title {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      letter-spacing: 1px;
+      float: left;
+      margin-top: 15px;
+    }
+
+    body.dark .calculator-title {
+      color: #f0f0f0;
+    }
+
+    /* Footer info */
+    .keyboard-info {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.8);
+      opacity: 0.8;
+    }
+
+    body.dark .keyboard-info {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Install Button */
+    #installBtn {
+      background: rgba(66, 133, 244, 0.9);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 10px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s;
+      z-index: 10;
+      position: relative;
+    }
+
+    #installBtn:hover {
+      background: rgba(66, 133, 244, 1);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Offline indicator */
+    .offline-indicator {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      display: none;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+    }
+
+    .offline-indicator.show {
+      display: block;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Responsive design */
+    @media (max-width: 400px) {
+      .calculator {
+        width: 90%;
+        padding: 20px 15px;
+      }
+      
+      button {
+        padding: 15px 5px;
+        font-size: 1.2rem;
+      }
+      
+      #display {
+        height: 60px;
+        font-size: 1.7rem;
+      }
+      
+      .calculator-title {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Offline Indicator -->
+  <div class="offline-indicator" id="offlineIndicator">
+    ⚡ Working Offline
+  </div>
+
+  <div class="calculator">
+    <h2 class="calculator-title">A-RIZAK Calculator</h2>
+    <button id="theme-toggle">🌙</button>
+
+    <input type="text" id="display" disabled placeholder="0">
+
+    <div class="buttons">
+      <button class="clear" onclick="clearDisplay()">C</button>
+      <button class="delete" onclick="deleteChar()">DEL</button>
+      <button class="operator" onclick="appendChar('/')">÷</button>
+      <button class="operator" onclick="appendChar('*')">×</button>
+
+      <button onclick="appendChar('7')">7</button>
+      <button onclick="appendChar('8')">8</button>
+      <button onclick="appendChar('9')">9</button>
+      <button class="operator" onclick="appendChar('-')">−</button>
+
+      <button onclick="appendChar('4')">4</button>
+      <button onclick="appendChar('5')">5</button>
+      <button onclick="appendChar('6')">6</button>
+      <button class="operator" onclick="appendChar('+')">+</button>
+
+      <button onclick="appendChar('1')">1</button>
+      <button onclick="appendChar('2')">2</button>
+      <button onclick="appendChar('3')">3</button>
+      <button onclick="appendChar('.')">.</button>
+
+      <button onclick="appendChar('0')">0</button>
+      <button class="equal" onclick="calculate()">=</button>
+    </div>
+    
+    <div class="keyboard-info">
+      Use keyboard: Numbers, +, -, ×, /, Enter, Backspace, Escape
+    </div>
+  </div>
+  
+  <!-- Install App Button -->
+  <button id="installBtn" onclick="installApp()" style="display: none;">⬇️ Install App</button>
+
+  <script>
+    // DOM elements
+    let display = document.getElementById("display");
+    let themeToggle = document.getElementById("theme-toggle");
+    let installBtn = document.getElementById("installBtn");
+    let offlineIndicator = document.getElementById("offlineIndicator");
+    let deferredPrompt;
+    let isOnline = navigator.onLine;
+
+    // Update online/offline status
+    function updateOnlineStatus() {
+      isOnline = navigator.onLine;
+      if (isOnline) {
+        offlineIndicator.classList.remove('show');
+        console.log('🌐 Online');
+      } else {
+        offlineIndicator.classList.add('show');
+        console.log('📴 Offline - App still works!');
+      }
+    }
+
+    // PWA Installation
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'block';
+    });
+
+    function installApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('✅ App installed successfully');
+            localStorage.setItem('appInstalled', 'true');
+          }
+          deferredPrompt = null;
+          installBtn.style.display = 'none';
+        });
+      }
+    }
+
+    // Service Worker Registration with enhanced offline support
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js', { scope: './' })
+          .then(registration => {
+            console.log('✅ Service Worker registered with scope:', registration.scope);
+            
+            // Check for updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              console.log('🔄 New service worker found');
+              
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('📦 New content available!');
+                  if (confirm('New version available! Reload to update?')) {
+                    window.location.reload();
+                  }
+                }
+              });
+            });
+          })
+          .catch(error => {
+            console.log('❌ Service Worker registration failed:', error);
+          });
+      });
+    }
+
+    // Network status events
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    
+    // Initial status check
+    updateOnlineStatus();
+
+    // Append character to display
+    function appendChar(char) {
+      if (display.value === "Error" || display.value === "0") {
+        display.value = "";
+      }
+      display.value += char;
+    }
+
+    // Clear the display
+    function clearDisplay() {
+      display.value = "0";
+    }
+
+    // Delete the last character
+    function deleteChar() {
+      display.value = display.value.slice(0, -1);
+      if (display.value === "") {
+        display.value = "0";
+      }
+    }
+
+    // Calculate the expression
+    function calculate() {
+      try {
+        let expression = display.value.replace(/÷/g, '/').replace(/×/g, '*');
+        
+        if (!expression.trim() || expression === "0") {
+          return;
+        }
+        
+        // Safe evaluation using Function constructor
+        const result = Function('"use strict";return (' + expression + ')')();
+        
+        if (!isFinite(result)) {
+          display.value = "Error";
+          return;
+        }
+        
+        // Round to avoid floating point precision issues
+        display.value = parseFloat(result.toFixed(10)).toString();
+        
+        // Save calculation history (works offline)
+        saveToHistory(expression, display.value);
+      } catch (error) {
+        display.value = "Error";
+      }
+    }
+
+    // Save calculation history (Offline storage)
+    function saveToHistory(expression, result) {
+      const history = JSON.parse(localStorage.getItem('calcHistory') || '[]');
+      history.unshift({
+        expression: expression,
+        result: result,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Keep only last 50 calculations
+      if (history.length > 50) {
+        history.pop();
+      }
+      
+      localStorage.setItem('calcHistory', JSON.stringify(history));
+      console.log('💾 Saved calculation to history');
+    }
+
+    // Keyboard support
+    document.addEventListener("keydown", (event) => {
+      const key = event.key;
+      
+      if ((key >= '0' && key <= '9') || ['+', '-', '*', '/', '.'].includes(key)) {
+        event.preventDefault();
+        appendChar(key);
+        highlightButton(key);
+      } else if (key === 'Enter' || key === '=') {
+        event.preventDefault();
+        calculate();
+        highlightButton("Enter");
+      } else if (key === 'Backspace') {
+        event.preventDefault();
+        deleteChar();
+        highlightButton("Backspace");
+      } else if (key === 'Escape' || key === 'Delete') {
+        event.preventDefault();
+        clearDisplay();
+        highlightButton("Escape");
+      }
+    });
+
+    // Button highlight effect
+    function highlightButton(key) {
+      let btn;
+      switch (key) {
+        case "Enter":
+          btn = document.querySelector(".equal");
+          break;
+        case "Backspace":
+          btn = document.querySelector(".delete");
+          break;
+        case "Escape":
+          btn = document.querySelector(".clear");
+          break;
+        case "+":
+        case "-":
+        case "*":
+        case "/":
+          btn = document.querySelector(`button[onclick*="'${key}'"]`);
+          break;
+        default:
+          if (!isNaN(key) || key === ".") {
+            btn = document.querySelector(`button[onclick*="'${key}'"]`);
+          }
+      }
+      
+      if (btn) {
+        btn.classList.add("active");
+        setTimeout(() => btn.classList.remove("active"), 150);
+      }
+    }
+
+    // Theme toggle
+    themeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      themeToggle.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
+      localStorage.setItem("calculatorTheme", document.body.classList.contains("dark") ? "dark" : "light");
+    });
+
+    // Initialize
+    document.addEventListener("DOMContentLoaded", () => {
+      // Initialize display
+      display.value = "0";
+      
+      // Load saved theme preference
+      const savedTheme = localStorage.getItem("calculatorTheme");
+      if (savedTheme === "dark") {
+        document.body.classList.add("dark");
+        themeToggle.textContent = "☀️";
+      }
+      
+      // Check if app was previously installed
+      if (localStorage.getItem('appInstalled')) {
+        console.log('📱 App is installed');
+      }
+      
+      // Show welcome message
+      if (localStorage.getItem('firstVisit') === null) {
+        console.log('👋 Welcome to A-RIZAK Calculator!');
+        localStorage.setItem('firstVisit', 'true');
+      }
+    });
+  </script>
+</body>
+</html>
